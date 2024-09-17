@@ -16,9 +16,10 @@ embed_model = TextEmbedding()
 embeds = embed_model.embed(docs)
 embeds = models.Batch( ids=[1,2], vectors = list(embeds), payloads = [{"1" : docs[0]}, {"2" : docs[1]}] )
 
-#client.create_collection(collection_name = "test_collection2", vectors_config = models.VectorParams(size=384, distance=models.Distance.DOT) )
+#client.create_collection(collection_name = "test_collection2",
+#vectors_config = models.VectorParams(size=384, distance=models.Distance.DOT) )
 
-client.upsert(collection_name = "test_collection2", 
+client.upsert(collection_name = "test_collection2",
               points = embeds
              )
 
