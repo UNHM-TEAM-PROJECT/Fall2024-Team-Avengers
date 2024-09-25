@@ -4,6 +4,8 @@ import torch
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
+from qdrant import qdrantsearch
+from fastembed import TextEmbedding
 
 def extract_text_from_pdf(pdf_path):
     text = ""
@@ -38,7 +40,8 @@ def answer_question(question, chunks, tokenizer, model):
     best_answer = ""
     best_score = float('-inf')
     for chunk in chunks:
-        inputs = tokenizer(question, chunk, return_tensors='pt', truncation=True, max_length=512)
+        chunk =  list(chunk.payload.values())
+        inputs = tokenizer(question, chunk[0], return_tensors='pt', truncation=True, max_length=200)
         input_ids = inputs['input_ids']
         attention_mask = inputs['attention_mask']
         with torch.no_grad():
@@ -64,15 +67,18 @@ def main(pdf_path):
     tokenizer, model = load_pretrained_model()
 
     qdrant_client = QdrantClient(host='localhost', port=6333)
-    collection_name = "pdf_chunks"
-    
-    create_collection_if_not_exists(qdrant_client, collection_name)
+    #collection_name = "pdf_chunks"
+    embed_model = TextEmbedding()
+    #create_collection_if_not_exists(qdrant_client, collection_name)
 
     while True:
         question = input("\nAsk a question (or type 'exit' to quit): ")
         if question.lower() == 'exit':
             print("Goodbye!")
             break
+        chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)
+        #print(chunks)
+        print(chunks)
         answer = answer_question(question, chunks, tokenizer, model)
         response = f"\nAnswer: {answer}"
         print(response)

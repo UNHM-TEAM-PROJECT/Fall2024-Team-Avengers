@@ -6,7 +6,7 @@ def search_db(client, q_text, embed_model):
     """" query vector DB, returns http.models.models object"""
     search_result = client.search(
     collection_name="internship2024",
-    limit = 5,
+    limit = 2,
     query_vector = next(embed_model.embed([q_text]))
     )
     return search_result

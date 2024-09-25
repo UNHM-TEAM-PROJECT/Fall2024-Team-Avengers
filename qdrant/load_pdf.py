@@ -5,16 +5,18 @@ import PyPDF2
 from  qdrant_client import QdrantClient, models
 from fastembed import TextEmbedding
 
-CHUNK_SIZE = 200
-
+CHUNK_SIZE = 1000
 def get_docs(pdf_path):
     """ Converts pdf into string of text"""
-    text = ""
+    text = []
     with open(pdf_path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
+        print(len(reader.pages))
+    
         for page_num in range(len(reader.pages)):
             page = reader.pages[page_num]
-            text += page.extract_text() or ""
+            #text = page.extract_text() or ""
+            text.append(page.extract_text() or "")
     return text
 
 def path_from_name(file_name):
@@ -27,26 +29,26 @@ def path_from_name(file_name):
 path = path_from_name(sys.argv[1])
 
 docs = get_docs(path)
-
-words = docs.split()
-
-word_chunks = [words[i*CHUNK_SIZE:(i+1) * CHUNK_SIZE] for i in range((len(words) + CHUNK_SIZE -1) // CHUNK_SIZE)]
-
-chunks = [" ".join(words) for words in word_chunks]
-print(chunks)
-
 client = QdrantClient( host='localhost' )
-embed_model = TextEmbedding()
 
-embeds = embed_model.embed(chunks)
+for num, page in enumerate(docs):
+    embed_model = TextEmbedding()
+    #words = page.split()
 
-pl_text = []
-for index, section in enumerate(chunks):
-    payload = {str(index) : section}
-    pl_text.append(payload)
+    #word_chunks = [words[i*CHUNK_SIZE:(i+1) * CHUNK_SIZE] for i in range((len(words) + CHUNK_SIZE -1) // CHUNK_SIZE)]
 
-embeds = models.Batch( ids=range(0, len(chunks)), vectors = list(embeds), payloads = pl_text)
+    #chunks = [" ".join(words) for words in word_chunks]
+    #print(chunks)
 
-client.upsert(collection_name = "internship2024",
-              points = embeds
-             )
+    embeds = embed_model.embed(page)
+
+    #pl_text = []
+    #for index, section in enumerate(chunks):
+     #   payload = {str(index) : section}
+      #  pl_text.append(payload)
+
+    embeds = models.Batch( ids=[num], vectors = list(embeds), payloads = [{"0" : page}])
+
+    client.upsert(collection_name = "internship2024",
+                points = embeds
+                )
