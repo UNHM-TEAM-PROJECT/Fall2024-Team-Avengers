@@ -28,15 +28,11 @@ def create_collection_if_not_exists(qdrant_client, collection_name):
         qdrant_client.get_collection(collection_name)
         print(f"Collection '{collection_name}' already exists.")
     except UnexpectedResponse as e:
-        if "not found" in str(e):
-            qdrant_client.create_collection(
-                collection_name=collection_name,
-                vector_size=768,
-                distance=models.Distance.COSINE
+        qdrant_client.create_collection(
+            collection_name=collection_name,
+            vectors_config = models.VectorParams(size=384, distance=models.Distance.DOT)
             )
-            print(f"Collection '{collection_name}' created.")
-        else:
-            print(f"Unexpected error occurred: {e}")
+        print(f"Collection '{collection_name}' created.")
 
 def answer_question(question, chunks, tokenizer, model):
     best_answer = ""
