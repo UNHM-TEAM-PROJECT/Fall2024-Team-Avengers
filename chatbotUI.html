@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <style>
         /* Global Styling */
         *, *::before, *::after {
@@ -319,8 +318,8 @@
             
             // Simulate bot response
             setTimeout(() => {
-                getBotResponse(messageText);
-            }, 2000);
+                addMessage('incoming', getBotResponse(messageText));
+            }, 500);
         }
 
         // Event listener for Send button
@@ -351,17 +350,15 @@
 
         function getBotResponse(userMessage) {
             // Simple example responses
-            $.ajax({
-                url: '/llm_response',
-                type: 'POST',
-                data: { 'message': userMessage },
-                success: function(response) {
-                    addMessage(response)
-                },
-                error: function(error) {
-                    console.log(error);
-                }
-            });
+            const responses = {
+                'hi': 'Hi',
+                'hello': 'Hi there!',
+                'how are you': 'I\'m good, thanks for asking!',
+                'bye': 'Goodbye! Have a great day!'
+            };
+            
+            const response = responses[userMessage.toLowerCase()];
+            return response || 'Sorry, I don\'t understand that.';
         }
     </script>
 </body>
