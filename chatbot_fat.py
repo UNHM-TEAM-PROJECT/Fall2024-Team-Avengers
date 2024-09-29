@@ -6,7 +6,7 @@ from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant import qdrantsearch
 from fastembed import TextEmbedding
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, make_response
 from huggingface_hub import login
 
 login(token = "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")
@@ -21,7 +21,10 @@ def hello_world():
 def handle_post():
     if request.method == 'POST':
         message = request.form['message']
-        return get_response(message)
+        response = make_response(get_response(message))
+        response.mimetype = "text/plain"
+
+        return response
 
 
 def extract_text_from_pdf(pdf_path):
@@ -126,4 +129,4 @@ def get_response(question):
 if __name__ == "__main__":
     pdf_path = './qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
     main(pdf_path)
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8001)
