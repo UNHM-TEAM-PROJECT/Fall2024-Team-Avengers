@@ -318,8 +318,8 @@
             
             // Simulate bot response
             setTimeout(() => {
-                addMessage('incoming', getBotResponse(messageText));
-            }, 500);
+                getBotResponse(messageText);
+            }, 2000);
         }
 
         // Event listener for Send button
@@ -350,14 +350,18 @@
 
         function getBotResponse(userMessage) {
             // Simple example responses
-            const responses = {
-                'hi': 'Hi',
-                'hello': 'Hi there!',
-                'how are you': 'I\'m good, thanks for asking!',
-                'bye': 'Goodbye! Have a great day!'
-            };
+            $.ajax({
+                url: '/llm_response',
+                type: 'POST',
+                data: { 'message': userMessage },
+                success: function(response) {
+                    addMessage(response)
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
             
-            const response = responses[userMessage.toLowerCase()];
             return response || 'Sorry, I don\'t understand that.';
         }
     </script>
