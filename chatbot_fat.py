@@ -84,9 +84,9 @@ def answer_question(question, chunks, tokenizer, model):
     """},
     {"role": "user", "content": question},
     ]
-    inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt")
+    inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt").to("cuda")
     input_length = inputs.shape[1]
-    generated_ids = model.generate(inputs, do_sample=True, max_new_tokens=20)
+    generated_ids = model.generate(inputs, do_sample=True, max_new_tokens=500)
     return tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0]
 
 
