@@ -6,7 +6,7 @@ from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant import qdrantsearch
 from fastembed import TextEmbedding
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, make_response
 from huggingface_hub import login
 
 login(token = "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")
@@ -21,7 +21,10 @@ def hello_world():
 def handle_post():
     if request.method == 'POST':
         message = request.form['message']
-        return get_response(message)
+        response = make_response(get_response(message))
+        response.mimetype = "text/plain"
+
+        return response
 
 
 def extract_text_from_pdf(pdf_path):
@@ -91,28 +94,39 @@ def answer_question(question, chunks, tokenizer, model):
 
 
 def main(pdf_path):
+    global tokenizer
+    global model
+    global qdrant_client
+    global embed_model
+
     context = extract_text_from_pdf(pdf_path)
     chunks = chunk_text(context)
 
     tokenizer, model = load_pretrained_model()
 
     qdrant_client = QdrantClient(host='localhost', port=6333)
-    #collection_name = "pdf_chunks"
     embed_model = TextEmbedding()
-    #create_collection_if_not_exists(qdrant_client, collection_name)
 
-    while True:
-        question = input("\nAsk a question (or type 'exit' to quit): ")
-        if question.lower() == 'exit':
-            print("Goodbye!")
-            break
-        chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)
-        #print(chunks)
-        print(chunks)
-        answer = answer_question(question, chunks, tokenizer, model)
-        response = f"\nAnswer: {answer}"
-        print(response)
+def get_response(question):
+    chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)        
+    answer = answer_question(question, chunks, tokenizer, model)
+    response = f"\nAnswer: {answer}"
+    return response
+
+#CLI Interactive loop
+#    while True:
+#        question = input("\nAsk a question (or type 'exit' to quit): ")
+#        if question.lower() == 'exit':
+#            print("Goodbye!")
+#            break
+#        chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)
+#        #print(chunks)
+#        print(chunks)
+#        answer = answer_question(question, chunks, tokenizer, model)
+#        response = f"\nAnswer: {answer}"
+#        print(response)
 
 if __name__ == "__main__":
     pdf_path = './qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
     main(pdf_path)
+    app.run(host="0.0.0.0", port=8001)
