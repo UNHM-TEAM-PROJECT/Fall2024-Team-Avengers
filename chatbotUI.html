@@ -1,334 +1,151 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot</title>
+    <title>Internship Chatbot</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <style>
-        /* Global Styling */
-        *, *::before, *::after {
+        /* Global Styles */
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Poppins", sans-serif;
-        }
-
-        :root {
-            --text-color: #FFFFFF;
-            --icon-color: #ACACBE;
-            --icon-hover-bg: #5b5e71;
-            --placeholder-color: #dcdcdc;
-            --outgoing-chat-bg: #343541;
-            --incoming-chat-bg: #444654;
-            --outgoing-chat-border: #343541;
-            --incoming-chat-border: #444654;
-        }
-
-        .light-mode {
-            --text-color: #343541;
-            --icon-color: #a9a9bc;
-            --icon-hover-bg: #f1f1f3;
-            --placeholder-color: #6c6c6c;
-            --outgoing-chat-bg: #FFFFFF;
-            --incoming-chat-bg: #F7F7F8;
-            --outgoing-chat-border: #FFFFFF;
-            --incoming-chat-border: #D9D9E3;
+            font-family: Arial, sans-serif;
         }
 
         body {
-            background: var(--outgoing-chat-bg);
-            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f7f8; /* Light background */
+        }
+
+        .chatbox {
+            width: 100%;
+            max-width: 600px;
+            height: 500px; /* Fixed height for the entire chatbox */
+            background-color: #ffffff; /* White background */
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            margin: 0;
+        }
+
+        .chat-title {
+            background-color: #4a90e2; /* Bright blue for title */
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            position: sticky; /* Keeps title visible */
+            top: 0; /* Sticks to the top */
+            z-index: 1; /* Ensure it stays above other elements */
         }
 
         .chat-container {
             flex: 1;
-            overflow-y: auto;
-            padding-bottom: 150px;
+            padding: 20px;
+            overflow-y: auto; /* Enable scrolling */
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            height: calc(100% - 100px); /* Adjust height for input area */
         }
 
-        .chat-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .chat-container::-webkit-scrollbar-track {
-            background: var(--incoming-chat-bg);
-            border-radius: 25px;
-        }
-
-        .chat-container::-webkit-scrollbar-thumb {
-            background: var(--icon-color);
-            border-radius: 25px;
-        }
-
-        .default-text {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            height: 70vh;
-            padding: 0 10px;
-            text-align: center;
-            color: var(--text-color);
-        }
-
-        .default-text h1 {
-            font-size: 3.3rem;
-        }
-
-        .default-text p {
-            margin-top: 10px;
-            font-size: 1.1rem;
-        }
-
-        .chat-container .chat {
-            padding: 25px 10px;
-            display: flex;
-            justify-content: center;
-            color: var(--text-color);
-        }
-
-        .chat-container .chat.outgoing {
-            background: var(--outgoing-chat-bg);
-            border: 1px solid var(--outgoing-chat-border);
+        .chat {
+            margin: 10px 0;
+            padding: 10px;
             border-radius: 10px;
+            max-width: 80%; /* Limit width of messages */
         }
 
-        .chat-container .chat.incoming {
-            background: var(--incoming-chat-bg);
-            border: 1px solid var(--incoming-chat-border);
-            border-radius: 10px;
+        .chat.outgoing {
+            background-color: #e1f5fe; /* Light blue for outgoing messages */
+            align-self: flex-end; /* Align to the right */
         }
 
-        .chat .chat-content {
-            display: flex;
-            max-width: 1200px;
-            width: 100%;
-            align-items: flex-start;
-            justify-content: space-between;
-        }
-
-        .chat .chat-details {
-            display: flex;
-            align-items: center;
-        }
-
-        .chat .chat-details img {
-            width: 35px;
-            height: 35px;
-            align-self: flex-start;
-            object-fit: cover;
-            border-radius: 2px;
-        }
-
-        .chat .chat-details p {
-            white-space: pre-wrap;
-            font-size: 1.05rem;
-            padding: 0 50px 0 25px;
-            color: var(--text-color);
-            word-break: break-word;
-        }
-
-        .chat .chat-details p.error {
-            color: #e55865;
-        }
-
-        .chat .typing-animation {
-            padding-left: 25px;
-            display: inline-flex;
-        }
-
-        .typing-animation .typing-dot {
-            height: 7px;
-            width: 7px;
-            border-radius: 50%;
-            margin: 0 3px;
-            opacity: 0.7;
-            background: var(--text-color);
-            animation: animateDots 1.5s ease-in-out infinite;
-        }
-
-        @keyframes animateDots {
-            0%, 44% {
-                transform: translateY(0);
-            }
-            28% {
-                opacity: 0.4;
-                transform: translateY(-6px);
-            }
-            44% {
-                opacity: 0.2;
-            }
+        .chat.incoming {
+            background-color: #ffffff; /* White for incoming messages */
+            align-self: flex-start; /* Align to the left */
+            border: 1px solid #e0e0e0; /* Border for incoming messages */
         }
 
         .typing-container {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
+            padding: 10px;
+            border-top: 1px solid #e0e0e0;
             display: flex;
-            padding: 20px 10px;
-            justify-content: center;
-            background: var(--outgoing-chat-bg);
-            border-top: 1px solid var(--incoming-chat-border);
-        }
-
-        .typing-container .typing-content {
-            display: flex;
-            max-width: 950px;
-            width: 100%;
-            align-items: flex-end;
         }
 
         .typing-textarea {
-            width: 100%;
+            flex: 1;
             display: flex;
             position: relative;
         }
 
         .typing-textarea textarea {
-            resize: none;
-            height: 55px;
             width: 100%;
-            border: none;
-            padding: 15px 45px 15px 20px;
-            color: var(--text-color);
-            font-size: 1rem;
-            border-radius: 4px;
-            max-height: 250px;
-            overflow-y: auto;
-            background: var(--incoming-chat-bg);
-            outline: 1px solid var(--incoming-chat-border);
+            height: 45px;
+            border: 1px solid #e0e0e0;
+            border-radius: 25px; /* Curved text area */
+            padding: 10px;
+            resize: none; /* Disable resize */
+            outline: none;
         }
 
         .typing-textarea textarea::placeholder {
-            color: var(--placeholder-color);
+            color: #aaa; /* Placeholder color */
         }
 
-        .typing-content span {
-            width: 55px;
-            height: 55px;
-            display: flex;
-            border-radius: 4px;
-            font-size: 1.35rem;
-            align-items: center;
-            justify-content: center;
-            color: var(--icon-color);
+        .send-button {
+            margin-left: 10px;
+            background-color: #4a90e2; /* Send button color */
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
 
-        .typing-textarea span {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            visibility: hidden;
-        }
-
-        .typing-textarea textarea:valid ~ span {
-            visibility: visible;
-        }
-
-        .typing-controls {
-            display: flex;
-        }
-
-        .typing-controls span {
-            margin-left: 7px;
-            font-size: 1.4rem;
-            background: var(--incoming-chat-bg);
-            outline: 1px solid var(--incoming-chat-border);
-        }
-
-        .typing-controls span:hover {
-            background: var(--icon-hover-bg);
-        }
-
-        @media screen and (max-width: 600px) {
-            .default-text h1 {
-                font-size: 2.3rem;
-            }
-
-            .default-text p, textarea, .chat p {
-                font-size: 0.95rem !important;
-            }
-
-            .chat-container .chat {
-                padding: 20px 10px;
-            }
-
-            .chat-container .chat img {
-                height: 32px;
-                width: 32px;
-            }
-
-            .chat-container .chat p {
-                padding: 0 20px;
-            }
-
-            .typing-container {
-                padding: 15px 10px;
-            }
-
-            .typing-textarea textarea {
-                height: 45px;
-                padding: 10px 40px 10px 10px;
-            }
-
-            .typing-content span {
-                height: 45px;
-                width: 45px;
-                margin-left: 5px;
-            }
-
-            span.material-symbols-rounded {
-                font-size: 1.25rem !important;
-            }
+        .send-button:hover {
+            background-color: #357ab8; /* Darker on hover */
         }
     </style>
 </head>
 <body>
-    <div class="chat-container" id="chat-container">
-        <!-- Chat messages will be dynamically added here -->
-        <div class="default-text">
-            <h1>Welcome to Internship</h1>
-            
+    <div class="chatbox">
+        <div class="chat-title">UNH Internship Chatbot</div>
+        <div class="chat-container" id="chat-container">
+            <!-- Chat messages will be dynamically added here -->
         </div>
-    </div>
-    <div class="typing-container">
-        <div class="typing-content">
+        <div class="typing-container">
             <div class="typing-textarea">
                 <textarea id="user-input" placeholder="Type a message..."></textarea>
-                <span id="send-button" class="material-symbols-rounded">send</span>
+                <button id="send-button" class="send-button">Send</button>
             </div>
         </div>
     </div>
+
     <script>
-        // Function to handle sending a message
         function sendMessage() {
             const input = document.getElementById('user-input');
             const messageText = input.value.trim();
-            
             if (messageText === '') return;
-            
-            // Add user message to chat
-            addMessage('outgoing', messageText);
-            input.value = '';
-            
-            // Simulate bot response
-                getBotResponse(messageText);
 
+            addMessage('outgoing', messageText);
+            input.value = ''; // Clear input
+
+            // Simulate bot response
+            setTimeout(() => {
+                getBotResponse(messageText);
+            }, 500);
         }
 
-        // Event listener for Send button
         document.getElementById('send-button').addEventListener('click', sendMessage);
-
-        // Event listener for Enter key
         document.getElementById('user-input').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
-                event.preventDefault(); // Prevent the default action (form submission, if any)
+                event.preventDefault(); // Prevent default action
                 sendMessage();
             }
         });
@@ -337,31 +154,15 @@
             const chatContainer = document.getElementById('chat-container');
             const chatDiv = document.createElement('div');
             chatDiv.className = `chat ${type}`;
-            chatDiv.innerHTML = `
-                <div class="chat-content">
-                    <div class="chat-details">
-                        <p>${message}</p>
-                    </div>
-                </div>
-            `;
+            chatDiv.innerText = message;
             chatContainer.appendChild(chatDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom
         }
 
         function getBotResponse(userMessage) {
-            // Simple example responses
-            $.ajax({
-                url: '/llm_response',
-                type: 'POST',
-                data: { 'message': userMessage },
-                success: function(response) {
-                    console.log(response)
-                    addMessage('incoming', response)
-                },
-                error: function(error) {
-                    console.log(error);
-                }
-            });
+            // Simulated bot response
+            const response = "This is a simulated response based on: " + userMessage;
+            addMessage('incoming', response);
         }
     </script>
 </body>
