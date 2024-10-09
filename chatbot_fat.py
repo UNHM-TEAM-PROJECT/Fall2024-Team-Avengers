@@ -77,7 +77,7 @@ def answer_question(question, chunks, tokenizer, model):
 
     If the information is not available in the context, say: "I don’t have that information right now."
 
-    Focus on making responses feel natural, as if you're directly answering the student’s question.
+    Focus on making responses feel natural, as if you're directly answering the student’s question .
 
 
     Context: 
