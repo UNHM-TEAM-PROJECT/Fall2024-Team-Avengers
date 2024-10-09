@@ -42,6 +42,14 @@
             position: sticky; /* Keeps title visible */
             top: 0; /* Sticks to the top */
             z-index: 1; /* Ensure it stays above other elements */
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+        }
+
+        .chat-title img {
+            height: 40px; /* Adjust logo height */
+            margin-right: 10px; /* Space between logo and title */
         }
 
         .chat-container {
@@ -115,7 +123,10 @@
 </head>
 <body>
     <div class="chatbox">
-        <div class="chat-title">UNH Internship Chatbot</div>
+        <div class="chat-title">
+            <img src="https://www.unh.edu/sites/default/files/unh-logo.png" alt="UNH Logo"> <!-- Replace with actual logo URL -->
+            Internship Chatbot
+        </div>
         <div class="chat-container" id="chat-container">
             <!-- Chat messages will be dynamically added here -->
         </div>
