@@ -4,8 +4,6 @@ import torch
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
-from qdrant import qdrantsearch
-from fastembed import TextEmbedding
 
 def extract_text_from_pdf(pdf_path):
     text = ""
@@ -21,8 +19,10 @@ def chunk_text(text, chunk_size=2000):
     return chunks
 
 def load_pretrained_model():
-    tokenizer = AutoTokenizer.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
-    model = AutoModelForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
+    # Using DistilBERT for faster inference
+    tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased-distilled-squad')
+    model = AutoModelForQuestionAnswering.from_pretrained('distilbert-base-uncased-distilled-squad')
+    model.eval()  # Set the model to evaluation mode
     return tokenizer, model
 
 def create_collection_if_not_exists(qdrant_client, collection_name):
@@ -30,34 +30,44 @@ def create_collection_if_not_exists(qdrant_client, collection_name):
         qdrant_client.get_collection(collection_name)
         print(f"Collection '{collection_name}' already exists.")
     except UnexpectedResponse as e:
-        qdrant_client.create_collection(
-            collection_name=collection_name,
-            vectors_config = models.VectorParams(size=384, distance=models.Distance.DOT)
+        if "not found" in str(e):
+            qdrant_client.create_collection(
+                collection_name=collection_name,
+                vector_size=768,
+                distance=models.Distance.COSINE
             )
-        print(f"Collection '{collection_name}' created.")
+            print(f"Collection '{collection_name}' created.")
+        else:
+            print(f"Unexpected error occurred: {e}")
 
 def answer_question(question, chunks, tokenizer, model):
     best_answer = ""
     best_score = float('-inf')
+    
     for chunk in chunks:
-        chunk =  list(chunk.payload.values())
-        inputs = tokenizer(question, chunk[0], return_tensors='pt', truncation=True, max_length=200)
-        input_ids = inputs['input_ids']
-        attention_mask = inputs['attention_mask']
+        inputs = tokenizer(question, chunk, return_tensors='pt', truncation=True, max_length=512)
+        input_ids = inputs['input_ids'].to('cuda' if torch.cuda.is_available() else 'cpu')
+        attention_mask = inputs['attention_mask'].to('cuda' if torch.cuda.is_available() else 'cpu')
+        
         with torch.no_grad():
             outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+        
         start_scores = outputs.start_logits
         end_scores = outputs.end_logits
         start_index = torch.argmax(start_scores)
         end_index = torch.argmax(end_scores) + 1
+        
         if start_index >= end_index:
             continue
+        
         answer_tokens = input_ids[0][start_index:end_index]
         answer = tokenizer.decode(answer_tokens, skip_special_tokens=True).strip()
         answer_score = start_scores[0][start_index].item() + end_scores[0][end_index - 1].item()
+        
         if answer_score > best_score:
             best_answer = answer
             best_score = answer_score
+
     return best_answer if best_answer else "Answer not found."
 
 def main(pdf_path):
@@ -66,19 +76,20 @@ def main(pdf_path):
 
     tokenizer, model = load_pretrained_model()
 
+    # Load model to GPU if available
+    if torch.cuda.is_available():
+        model = model.to('cuda')
+
     qdrant_client = QdrantClient(host='localhost', port=6333)
-    #collection_name = "pdf_chunks"
-    embed_model = TextEmbedding()
-    #create_collection_if_not_exists(qdrant_client, collection_name)
+    collection_name = "pdf_chunks"
+    
+    create_collection_if_not_exists(qdrant_client, collection_name)
 
     while True:
         question = input("\nAsk a question (or type 'exit' to quit): ")
         if question.lower() == 'exit':
             print("Goodbye!")
             break
-        chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)
-        #print(chunks)
-        print(chunks)
         answer = answer_question(question, chunks, tokenizer, model)
         response = f"\nAnswer: {answer}"
         print(response)
