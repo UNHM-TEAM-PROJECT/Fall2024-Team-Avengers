@@ -49,7 +49,7 @@ def load_pretrained_model():
 
     model = AutoModelForCausalLM.from_pretrained(
     model_id, torch_dtype=torch.bfloat16, quantization_config=quantization_config)
-    model = model.compile()
+    model = torch.compile(model)
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
