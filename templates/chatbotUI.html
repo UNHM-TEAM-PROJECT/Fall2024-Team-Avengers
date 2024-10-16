@@ -170,10 +170,27 @@
             chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom
         }
 
-        function getBotResponse(userMessage) {
+        function getSimBotResponse(userMessage) {
             // Simulated bot response
             const response = "This is a simulated response based on: " + userMessage;
             addMessage('incoming', response);
+        }
+
+        function getBotResponse(userMessage) {
+            // Simple example responses
+            $.ajax({
+                url: '/llm_response',
+                type: 'POST',
+                data: { 'message': userMessage },
+                success: function(response) {
+                    addMessage("incoming", response)
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+            
+            return response || 'Sorry, I don\'t understand that.';
         }
     </script>
 </body>
