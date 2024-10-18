@@ -49,7 +49,7 @@ def load_pretrained_model():
 
     model = AutoModelForCausalLM.from_pretrained(
     model_id, torch_dtype=torch.bfloat16, quantization_config=quantization_config)
-    model = torch.compile(model)
+    model = torch.compile(model, mode="max-autotune")
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
@@ -119,7 +119,7 @@ def get_response(question):
 
     resp_time = t_fin - t_in
     chunks = [chunk.payload.values() for chunk in chunks]
-    
+
     fields=[question, chunks, answer, resp_time]
     with open('log.csv', 'a+', newline='') as log:
         writer = csv.writer(log)
