@@ -116,7 +116,10 @@ def get_response(question):
     answer = answer_question(question, chunks, tokenizer, model)
     response = f"\nAnswer: {answer}"
     t_fin = time.time()
+
     resp_time = t_fin - t_in
+    chunks = [chunk.payload.values() for chunk in chunks]
+    
     fields=[question, chunks, answer, resp_time]
     with open('log.csv', 'a+', newline='') as log:
         writer = csv.writer(log)
