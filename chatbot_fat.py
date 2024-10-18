@@ -3,6 +3,7 @@ import time
 import csv
 import PyPDF2
 import torch
+import configparser
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
@@ -11,7 +12,9 @@ from fastembed import TextEmbedding
 from flask import Flask, render_template, request, redirect, session, make_response
 from huggingface_hub import login
 
-login(token = "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")
+config = configparser.ConfigParser()
+config.read("config.txt")
+login(token = config.get("settings", "hf_key") )
 
 app = Flask(__name__)
 
@@ -107,7 +110,7 @@ def main(pdf_path):
 
     tokenizer, model = load_pretrained_model()
 
-    qdrant_client = QdrantClient(host='localhost', port=6333)
+    qdrant_client = QdrantClient(host=config.get("settings", "qdrant_host"), port=6333)
     embed_model = TextEmbedding()
 
 def get_response(question):
@@ -142,4 +145,4 @@ def get_response(question):
 if __name__ == "__main__":
     pdf_path = './qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
     main(pdf_path)
-    app.run(host="192.168.122.62", port=1896)
+    app.run(host=config.get("settings", "bot_ip"), port = config.get("settings", "bot_port"))
