@@ -1,4 +1,6 @@
 import os
+import time
+import csv
 import PyPDF2
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
@@ -47,6 +49,7 @@ def load_pretrained_model():
 
     model = AutoModelForCausalLM.from_pretrained(
     model_id, torch_dtype=torch.bfloat16, quantization_config=quantization_config)
+    model = torch.compile(model)
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
@@ -108,9 +111,16 @@ def main(pdf_path):
     embed_model = TextEmbedding()
 
 def get_response(question):
+    t_in = time.time()
     chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)        
     answer = answer_question(question, chunks, tokenizer, model)
     response = f"\nAnswer: {answer}"
+    t_fin = time.time()
+    resp_time = t_fin - t_in
+    fields=[question, chunks, answer, resp_time]
+    with open('log.csv', 'a+', newline='') as log:
+        writer = csv.writer(log)
+        writer.writerow(fields)
     return response
 
 #CLI Interactive loop
@@ -129,4 +139,4 @@ def get_response(question):
 if __name__ == "__main__":
     pdf_path = './qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
     main(pdf_path)
-    app.run(host="0.0.0.0", port=8001)
+    app.run(host="192.168.122.62", port=1896)
