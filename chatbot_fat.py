@@ -162,4 +162,4 @@ def get_response(question):
 if __name__ == "__main__":
     pdf_path = './qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
     main(pdf_path)
-    app.run(host="0.0.0.0", port=8001)
+    app.run(host="192.168.122.68", port=1896)
