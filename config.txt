@@ -1,0 +1,5 @@
+[settings]
+hf_key = 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
+bot_port = 1896
+bot_ip = 192.168.122.68
+qdrant_host = localhost
