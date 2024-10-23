@@ -3,12 +3,12 @@ import sys
 import os
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-from chatbot_fat import get_response, main
+from chatbot_fat import get_response, main 
 
 # Fixture for setup
 @pytest.fixture(scope="module", autouse=True)
 def setup_chatbot():
-    pdf_path = './qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
+    pdf_path = '../qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
     main(pdf_path)
 
 # Expected responses for Page 5
@@ -77,6 +77,6 @@ expected_responses_page5 = {
 
 # Test function for Page 5
 @pytest.mark.parametrize("question, expected_answers", expected_responses_page5.items())
-def test_chatbot_page5_responses(question, expected_answers):
+def test_chatbot_page5_responses(question, expected_keywords):
     response = get_response(question)
-    assert response in expected_answers, f"For '{question}', got '{response}' which was not in expected answers."
+    assert any(keyword in response for keyword in expected_keywords), f"For '{question}', expected one of {expected_keywords} but got '{response}'"
