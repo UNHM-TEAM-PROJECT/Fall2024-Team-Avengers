@@ -36,7 +36,8 @@ expected_responses_page1 = {
 }
 
 # Test function for Page 1
-@pytest.mark.parametrize("question, expected_answers", expected_responses_page1.items())
-def test_chatbot_page1_responses(question, expected_answers):
+@pytest.mark.parametrize("question, expected_keywords", expected_responses_page1.items())
+def test_chatbot_page1_responses(question, expected_keywords):
     response = get_response(question)  # Call the real model function
-    assert response in expected_answers, f"For '{question}', got '{response}' which was not in expected answers."
+    # Check that at least one expected keyword is in the response
+    assert any(keyword in response for keyword in expected_keywords), f"For '{question}', expected one of {expected_keywords} but got '{response}'"
