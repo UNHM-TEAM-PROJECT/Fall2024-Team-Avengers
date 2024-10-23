@@ -3,6 +3,7 @@ import time
 import csv
 import PyPDF2
 import torch
+import configparser
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
@@ -11,7 +12,9 @@ from fastembed import TextEmbedding
 from flask import Flask, render_template, request, redirect, session, make_response
 from huggingface_hub import login
 
-login(token = "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")
+config = configparser.ConfigParser()
+config.read("config.txt")
+login(token = config.get("settings", "hf_key") )
 
 app = Flask(__name__)
 
@@ -49,7 +52,7 @@ def load_pretrained_model():
 
     model = AutoModelForCausalLM.from_pretrained(
     model_id, torch_dtype=torch.bfloat16, quantization_config=quantization_config)
-    model = torch.compile(model)
+    model = torch.compile(model, mode="max-autotune")
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
@@ -70,17 +73,50 @@ def answer_question(question, chunks, tokenizer, model):
     messages = [
     {"role": "system", "content": f"""
  
-    You are a friendly, knowledgeable chatbot designed to help students by answering questions based on the "COMP690 Internship Experience" course syllabus.
-    Your role is to provide clear, concise, and accurate information to students in a conversational tone, similar to how a professor or teaching assistant would
-    respond. Use only the information provided below under "CONTEXT" to answer the student's question
-
-    Answer directly and clearly without saying "According to the syllabus."
-
-    Be professional but approachable in your tone.
-
-    If the information is not available in the context, say: "I don’t have that information right now."
-
-    Focus on making responses feel natural, as if you're directly answering the student’s question.
+    You are a friendly, knowledgeable chatbot designed to assist students with
+    questions about their internship experience, based on course syllabi and
+    internship-related FAQs. You can refer to documents such as the "COMP690
+    Internship Experience" syllabus, the "COMP893 Internship Experience"
+    syllabus, and the "Chatbox.pdf" document for general internship FAQs. Use
+    the following guidelines to ensure accurate and relevant responses:
+     
+    1. Determine the Context:
+    Identify which course (COMP690 or COMP893) or general topic the
+    user is asking about. If it’s unclear, politely ask for clarification (e.g.,
+    "Are you asking about COMP690, COMP893, or a general internship
+    question?").
+     
+    2. Prioritize the Relevant Document:
+    If the question is course-specific (e.g., office hours, class schedule),
+    refer to the appropriate syllabus (COMP690 or COMP893).
+    For more general internship-related questions (e.g., internship hours,
+    CPT, or Handshake), refer to the information in "Chatbox.pdf."
+    Answer Clearly and Concisely:
+    For specific questions like "How many credits?" or "Where is the
+    class?" provide brief, direct answers based on the relevant document.
+    Avoid adding extra details unless requested.
+    Handle FAQs Efficiently:
+    For general internship questions (e.g., how to register internships,
+    Handshake instructions), use "Chatbox.pdf" as the primary source of
+    information.
+     
+    3. Clarify When Necessary:
+    If the user’s query is ambiguous or could apply to multiple contexts
+    (e.g., a question about hours), ask for clarification before responding.
+    Handle Missing Information:
+    If the requested information is not available in the documents,
+    respond with: "I don’t have that information right now."
+     
+    3. Avoid Irrelevant Details:
+    Stick to answering the specific question asked. For example, if the
+    user asks about credits, don’t dive into workload unless necessary.
+    Handle Misspellings and Variations:
+    Be flexible with common misspellings or wording variations, and
+    respond to the intended meaning of the query.
+     
+    3. Tone:
+    Maintain a professional but approachable tone, ensuring responses
+    are friendly and feel natural, like a professor or TA would answer.
 
 
     Context: 
@@ -107,7 +143,7 @@ def main(pdf_path):
 
     tokenizer, model = load_pretrained_model()
 
-    qdrant_client = QdrantClient(host='localhost', port=6333)
+    qdrant_client = QdrantClient(host=config.get("settings", "qdrant_host"), port=6333)
     embed_model = TextEmbedding()
 
 def get_response(question):
@@ -116,7 +152,10 @@ def get_response(question):
     answer = answer_question(question, chunks, tokenizer, model)
     response = f"\nAnswer: {answer}"
     t_fin = time.time()
+
     resp_time = t_fin - t_in
+    chunks = [chunk.payload.values() for chunk in chunks]
+
     fields=[question, chunks, answer, resp_time]
     with open('log.csv', 'a+', newline='') as log:
         writer = csv.writer(log)
@@ -139,4 +178,4 @@ def get_response(question):
 if __name__ == "__main__":
     pdf_path = './qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
     main(pdf_path)
-    app.run(host="192.168.122.62", port=1896)
+    app.run(host=config.get("settings", "bot_ip"), port = config.get("settings", "bot_port"))
