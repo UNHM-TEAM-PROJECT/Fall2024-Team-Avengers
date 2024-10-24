@@ -50,7 +50,13 @@ def chunk_text(text, chunk_size=2000):
     return chunks
 
 def answer_question(messages, chunks):
-    response = open_client.chat.completions.create(model = "gpt-4o-mini", messages = messages)
+    history = messages.copy()
+
+    history.append({"role": "system", "content": f"""context:
+    {chunks[0].payload.values()}
+    {chunks[1].payload.values()} """})
+
+    response = open_client.chat.completions.create(model = "gpt-4o-mini", messages = history)
     return response
 
 def main():
@@ -111,7 +117,7 @@ def main():
     qdrant_client = QdrantClient(host=config.get("settings", "qdrant_host"), port=6333)
     embed_model = TextEmbedding()
 
-def get_response(messages, question):
+def get_response(messages):
     question = messages[-1]['content']
     t_in = time.time()
     chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)        
@@ -127,6 +133,9 @@ def get_response(messages, question):
         writer = csv.writer(log)
         writer.writerow(fields)
     return response
+
+def get_context(messages):
+    pass
 
 if __name__ == "__main__":
     main()
