@@ -2,19 +2,16 @@ import os
 import time
 import csv
 import PyPDF2
-import torch
 import configparser
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant import qdrantsearch
 from fastembed import TextEmbedding
 from flask import Flask, render_template, request, redirect, session, make_response
-from huggingface_hub import login
+from openai import OpenAI
 
 config = configparser.ConfigParser()
 config.read("config.txt")
-login(token = config.get("settings", "hf_key") )
 
 app = Flask(__name__)
 
@@ -45,32 +42,8 @@ def chunk_text(text, chunk_size=2000):
     chunks = [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
     return chunks
 
-def load_pretrained_model():
-    quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4")
-
-    model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-
-    model = AutoModelForCausalLM.from_pretrained(
-    model_id, torch_dtype=torch.bfloat16, quantization_config=quantization_config)
-    model = torch.compile(model, mode="max-autotune")
-
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-
-    return tokenizer, model
-
-def create_collection_if_not_exists(qdrant_client, collection_name):
-    try:
-        qdrant_client.get_collection(collection_name)
-        print(f"Collection '{collection_name}' already exists.")
-    except UnexpectedResponse as e:
-        qdrant_client.create_collection(
-            collection_name=collection_name,
-            vectors_config = models.VectorParams(size=384, distance=models.Distance.DOT)
-            )
-        print(f"Collection '{collection_name}' created.")
-
-def answer_question(question, chunks, tokenizer, model):
-    messages = [
+def answer_question(question, chunks,):
+    mymessages = [
     {"role": "system", "content": f"""
  
     You are a friendly, knowledgeable chatbot designed to assist students with
@@ -126,33 +99,25 @@ def answer_question(question, chunks, tokenizer, model):
     """},
     {"role": "user", "content": question},
     ]
-    inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt").to("cuda")
-    input_length = inputs.shape[1]
-    generated_ids = model.generate(inputs, do_sample=True, max_new_tokens=500)
-    return tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0]
-
+    response = open_client.chat.completions.create(model = "gpt-4o-mini", messages = mymessages)
+    return response
 
 def main(pdf_path):
-    global tokenizer
-    global model
     global qdrant_client
-    global embed_model
+    global openai_key
+    global open_client
 
-    context = extract_text_from_pdf(pdf_path)
-    chunks = chunk_text(context)
-
-    tokenizer, model = load_pretrained_model()
-
+    open_client = OpenAI()
+    openai_key = config.get("settings", "openai_key")
     qdrant_client = QdrantClient(host=config.get("settings", "qdrant_host"), port=6333)
-    embed_model = TextEmbedding()
 
 def get_response(question):
     t_in = time.time()
     chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)        
-    answer = answer_question(question, chunks, tokenizer, model)
-    response = f"\nAnswer: {answer}"
-    t_fin = time.time()
+    answer = answer_question(question, chunks)
+    response = f"\nAnswer: {answer.choices[0].message}"
 
+    t_fin = time.time()
     resp_time = t_fin - t_in
     chunks = [chunk.payload.values() for chunk in chunks]
 
@@ -162,20 +127,5 @@ def get_response(question):
         writer.writerow(fields)
     return response
 
-#CLI Interactive loop
-#    while True:
-#        question = input("\nAsk a question (or type 'exit' to quit): ")
-#        if question.lower() == 'exit':
-#            print("Goodbye!")
-#            break
-#        chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)
-#        #print(chunks)
-#        print(chunks)
-#        answer = answer_question(question, chunks, tokenizer, model)
-#        response = f"\nAnswer: {answer}"
-#        print(response)
-
 if __name__ == "__main__":
-    pdf_path = './qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
-    main(pdf_path)
     app.run(host=config.get("settings", "bot_ip"), port = config.get("settings", "bot_port"))
