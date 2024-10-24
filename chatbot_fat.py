@@ -102,14 +102,14 @@ def answer_question(question, chunks,):
     response = open_client.chat.completions.create(model = "gpt-4o-mini", messages = mymessages)
     return response
 
-def main(pdf_path):
+def main():
     global qdrant_client
     global openai_key
     global open_client
     global embed_model
     
-    open_client = OpenAI()
     openai_key = config.get("settings", "openai_key")
+    open_client = OpenAI(api_key = openai_key)
     qdrant_client = QdrantClient(host=config.get("settings", "qdrant_host"), port=6333)
     embed_model = TextEmbedding()
 
@@ -130,4 +130,5 @@ def get_response(question):
     return response
 
 if __name__ == "__main__":
+    main()
     app.run(host=config.get("settings", "bot_ip"), port = config.get("settings", "bot_port"))
