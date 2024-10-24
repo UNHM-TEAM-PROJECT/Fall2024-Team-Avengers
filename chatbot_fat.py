@@ -117,7 +117,7 @@ def get_response(question):
     t_in = time.time()
     chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)        
     answer = answer_question(question, chunks)
-    response = f"\nAnswer: {answer.choices[0].message}"
+    response = answer.choices[0].message
 
     t_fin = time.time()
     resp_time = t_fin - t_in
