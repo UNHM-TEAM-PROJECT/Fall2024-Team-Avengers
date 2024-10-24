@@ -106,10 +106,12 @@ def main(pdf_path):
     global qdrant_client
     global openai_key
     global open_client
-
+    global embed_model
+    
     open_client = OpenAI()
     openai_key = config.get("settings", "openai_key")
     qdrant_client = QdrantClient(host=config.get("settings", "qdrant_host"), port=6333)
+    embed_model = TextEmbedding()
 
 def get_response(question):
     t_in = time.time()
