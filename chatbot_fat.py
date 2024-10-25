@@ -2,21 +2,19 @@ import os
 import time
 import csv
 import PyPDF2
-import torch
 import configparser
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant import qdrantsearch
 from fastembed import TextEmbedding
 from flask import Flask, render_template, request, redirect, session, make_response
-from huggingface_hub import login
+from openai import OpenAI
 
 config = configparser.ConfigParser()
 config.read("config.txt")
-login(token = config.get("settings", "hf_key") )
 
 app = Flask(__name__)
+app.secret_key = "comp690"
 
 @app.route("/")
 def hello_world():
@@ -25,9 +23,15 @@ def hello_world():
 @app.route('/llm_response', methods=['POST'])
 def handle_post():
     if request.method == 'POST':
+        if 'history' not in session:
+            session['history'] = [prompt]
+
         message = request.form['message']
-        response = make_response(get_response(message))
+        session['history'].append( {"role": "user", "content": f"{message}"})
+
+        response = make_response(get_response(session['history']))
         response.mimetype = "text/plain"
+        session['history'].append( {"role": "assistant", "content": f"{response}"})
 
         return response
 
@@ -45,34 +49,24 @@ def chunk_text(text, chunk_size=2000):
     chunks = [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
     return chunks
 
-def load_pretrained_model():
-    quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4")
+def answer_question(messages, chunks):
+    history = messages.copy()
 
-    model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    history.append({"role": "system", "content": f"""context:
+    {chunks[0].payload.values()}
+    {chunks[1].payload.values()} """})
 
-    model = AutoModelForCausalLM.from_pretrained(
-    model_id, torch_dtype=torch.bfloat16, quantization_config=quantization_config)
-    model = torch.compile(model, mode="max-autotune")
+    response = open_client.chat.completions.create(model = "gpt-4o-mini", messages = history)
+    return response
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+def main():
+    global qdrant_client
+    global openai_key
+    global open_client
+    global embed_model
+    global prompt
 
-    return tokenizer, model
-
-def create_collection_if_not_exists(qdrant_client, collection_name):
-    try:
-        qdrant_client.get_collection(collection_name)
-        print(f"Collection '{collection_name}' already exists.")
-    except UnexpectedResponse as e:
-        qdrant_client.create_collection(
-            collection_name=collection_name,
-            vectors_config = models.VectorParams(size=384, distance=models.Distance.DOT)
-            )
-        print(f"Collection '{collection_name}' created.")
-
-def answer_question(question, chunks, tokenizer, model):
-    messages = [
-    {"role": "system", "content": f"""
- 
+    prompt = {"role": "system", "content": f"""
     You are a friendly, knowledgeable chatbot designed to assist students with
     questions about their internship experience, based on course syllabi and
     internship-related FAQs. You can refer to documents such as the "COMP690
@@ -117,42 +111,20 @@ def answer_question(question, chunks, tokenizer, model):
     3. Tone:
     Maintain a professional but approachable tone, ensuring responses
     are friendly and feel natural, like a professor or TA would answer.
-
-
-    Context: 
-    {chunks[0].payload.values()}
-    {chunks[1].payload.values()}
-
-    """},
-    {"role": "user", "content": question},
-    ]
-    inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt").to("cuda")
-    input_length = inputs.shape[1]
-    generated_ids = model.generate(inputs, do_sample=True, max_new_tokens=500)
-    return tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0]
-
-
-def main(pdf_path):
-    global tokenizer
-    global model
-    global qdrant_client
-    global embed_model
-
-    context = extract_text_from_pdf(pdf_path)
-    chunks = chunk_text(context)
-
-    tokenizer, model = load_pretrained_model()
-
+    """}
+    openai_key = config.get("settings", "openai_key")
+    open_client = OpenAI(api_key = openai_key)
     qdrant_client = QdrantClient(host=config.get("settings", "qdrant_host"), port=6333)
     embed_model = TextEmbedding()
 
-def get_response(question):
+def get_response(messages):
+    question = messages[-1]['content']
     t_in = time.time()
     chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)        
-    answer = answer_question(question, chunks, tokenizer, model)
-    response = f"\nAnswer: {answer}"
-    t_fin = time.time()
+    answer = answer_question(messages, chunks)
+    response = answer.choices[0].message.content
 
+    t_fin = time.time()
     resp_time = t_fin - t_in
     chunks = [chunk.payload.values() for chunk in chunks]
 
@@ -162,20 +134,9 @@ def get_response(question):
         writer.writerow(fields)
     return response
 
-#CLI Interactive loop
-#    while True:
-#        question = input("\nAsk a question (or type 'exit' to quit): ")
-#        if question.lower() == 'exit':
-#            print("Goodbye!")
-#            break
-#        chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)
-#        #print(chunks)
-#        print(chunks)
-#        answer = answer_question(question, chunks, tokenizer, model)
-#        response = f"\nAnswer: {answer}"
-#        print(response)
+def get_context(messages):
+    pass
 
 if __name__ == "__main__":
-    pdf_path = './qdrant/2024-fall-comp690-M2-M3-jin-1.pdf'
-    main(pdf_path)
+    main()
     app.run(host=config.get("settings", "bot_ip"), port = config.get("settings", "bot_port"))
