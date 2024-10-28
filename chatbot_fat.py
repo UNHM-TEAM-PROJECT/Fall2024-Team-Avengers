@@ -120,7 +120,7 @@ def main():
 def get_response(messages):
     question = messages[-1]['content']
     t_in = time.time()
-    chunks = qdrantsearch.search_db(qdrant_client, question, embed_model)        
+    chunks = get_context(messages, question)       
     answer = answer_question(messages, chunks)
     response = answer.choices[0].message.content
 
@@ -129,13 +129,36 @@ def get_response(messages):
     chunks = [chunk.payload.values() for chunk in chunks]
 
     fields=[question, chunks, answer, resp_time]
-    with open('log.csv', 'a+', newline='') as log:
+    with open('log.csv', 'a+', newline='', encoding="utf-8") as log:
         writer = csv.writer(log)
         writer.writerow(fields)
     return response
 
-def get_context(messages):
-    pass
+def get_context(messages, question):
+    messages = messages.copy()
+    messages[0] = {"role": "system", "content": f"""
+    You are a bot that categorizes questions. Given the chat history from the user,
+    determine if they are asking about Comp 893, or Comp 693. 
+                   
+    Respond with only "Comp 893", or "Comp 693". If you are unsure, respond with "not sure"
+
+    """
+    }
+    response = open_client.chat.completions.create(model = "gpt-4o-mini", messages = messages)
+    course = response.choices[0].message.content
+
+    match course:
+        case "Comp 893":
+            chunks = qdrantsearch.search_db(qdrant_client, question, embed_model, "893")
+        case "Comp 690":
+            chunks = qdrantsearch.search_db(qdrant_client, question, embed_model, "690")
+        case _:
+            chunks = qdrantsearch.search_db(qdrant_client, question, embed_model, "default")
+    fields=[question, course, chunks,]
+    with open('raglog.csv', 'a+', newline='', encoding="utf-8") as log:
+        writer = csv.writer(log)
+        writer.writerow(fields)
+    return chunks
 
 if __name__ == "__main__":
     main()
