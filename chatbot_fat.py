@@ -9,6 +9,7 @@ from qdrant import qdrantsearch
 from fastembed import TextEmbedding
 from flask import Flask, render_template, request, redirect, session, make_response
 from openai import OpenAI
+from itertools import chain
 
 config = configparser.ConfigParser()
 config.read("config.txt")
@@ -25,36 +26,27 @@ def handle_post():
     if request.method == 'POST':
         if 'history' not in session:
             session['history'] = [prompt]
+            session['course'] = ""
 
         message = request.form['message']
         session['history'].append( {"role": "user", "content": f"{message}"})
 
-        response = make_response(get_response(session['history']))
+        response = make_response(get_response(session))
         response.mimetype = "text/plain"
         session['history'].append( {"role": "assistant", "content": f"{response}"})
 
         return response
 
-
-def extract_text_from_pdf(pdf_path):
-    text = ""
-    with open(pdf_path, 'rb') as file:
-        reader = PyPDF2.PdfReader(file)
-        for page_num in range(len(reader.pages)):
-            page = reader.pages[page_num]
-            text += page.extract_text() or ""
-    return text
-
-def chunk_text(text, chunk_size=2000):
-    chunks = [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
-    return chunks
-
 def answer_question(messages, chunks):
     history = messages.copy()
-
-    history.append({"role": "system", "content": f"""context:
-    {chunks[0].payload.values()}
-    {chunks[1].payload.values()} """})
+    loc_chunks = chunks.copy()
+    loc_chunks = [mes.payload.values() for x in chunks for mes in x]    
+    
+    for payload in loc_chunks:
+        history.append({"role": "system", "content": f"""context:
+        {payload}
+        """})
+       # print(payload)
 
     response = open_client.chat.completions.create(model = "gpt-4o-mini", messages = history)
     return response
@@ -117,16 +109,22 @@ def main():
     qdrant_client = QdrantClient(host=config.get("settings", "qdrant_host"), port=6333)
     embed_model = TextEmbedding()
 
-def get_response(messages):
+def get_response(session):
+    messages = session['history']
     question = messages[-1]['content']
+
     t_in = time.time()
-    chunks = get_context(messages, question)       
+    #print(messages)
+    if session['course'] == "":
+        chunks = get_context(session, question)
+    chunks = get_rag(session, question)
+
     answer = answer_question(messages, chunks)
     response = answer.choices[0].message.content
-
     t_fin = time.time()
+
     resp_time = t_fin - t_in
-    chunks = [chunk.payload.values() for chunk in chunks]
+    chunks = [mes.payload.values() for x in chunks for mes in x]    
 
     fields=[question, chunks, answer, resp_time]
     with open('log.csv', 'a+', newline='', encoding="utf-8") as log:
@@ -134,10 +132,22 @@ def get_response(messages):
         writer.writerow(fields)
     return response
 
+def get_rag(session, question):
+    chunks = []
+    if session['course'] == "":
+        chunks.append(qdrantsearch.search_db(qdrant_client, question, embed_model, "default"))
+    else:
+        chunks.append(qdrantsearch.search_db(qdrant_client, question, embed_model, "default"))
+        print(session['course'])
+        chunks.append(qdrantsearch.search_db(qdrant_client, question, embed_model, session['course']))
+    return chunks
+
+
+
 def get_context(messages, question):
-    messages = messages.copy()
+    messages = session["history"].copy()
     messages[0] = {"role": "system", "content": f"""
-    You are a bot that categorizes questions. Given the chat history from the user,
+    You are a bot that categorizes questions. Given the ENTIRE chat history from the user,
     determine if they are asking about Comp 893, or Comp 693. 
                    
     Respond with only "Comp 893", or "Comp 693". If you are unsure, respond with "not sure"
@@ -149,16 +159,20 @@ def get_context(messages, question):
 
     match course:
         case "Comp 893":
-            chunks = qdrantsearch.search_db(qdrant_client, question, embed_model, "893")
+            #chunks = qdrantsearch.search_db(qdrant_client, question, embed_model, "893")
+            session['course'] = 893
         case "Comp 690":
-            chunks = qdrantsearch.search_db(qdrant_client, question, embed_model, "690")
+            #chunks = qdrantsearch.search_db(qdrant_client, question, embed_model, "690")
+            session['course'] = 690
         case _:
-            chunks = qdrantsearch.search_db(qdrant_client, question, embed_model, "default")
-    fields=[question, course, chunks,]
+            #chunks = qdrantsearch.search_db(qdrant_client, question, embed_model, "default")
+            session['course'] = ""
+
+    fields=[question, course, session['course']]
     with open('raglog.csv', 'a+', newline='', encoding="utf-8") as log:
         writer = csv.writer(log)
         writer.writerow(fields)
-    return chunks
+    return session['course']
 
 if __name__ == "__main__":
     main()
