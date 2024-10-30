@@ -88,7 +88,7 @@ Stay focused on the specific question asked. For example, if the user asks about
 Recognize and interpret common misspellings or different phrasings, responding to the user’s intended meaning.
 10. Maintain a Friendly, Natural Tone:
 Ensure your responses feel like a conversation with a professor or teaching assistant—approachable, professional, and helpful.
-
+""" }
     openai_key = config.get("settings", "openai_key")
     open_client = OpenAI(api_key = openai_key)
 
