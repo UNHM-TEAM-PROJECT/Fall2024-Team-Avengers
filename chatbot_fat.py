@@ -134,9 +134,9 @@ def get_context(messages, question):
     messages = session["history"].copy()
     messages[0] = {"role": "system", "content": f"""
     You are a bot that categorizes questions. Given the ENTIRE chat history from the user,
-    determine if they are asking about Comp 893, or Comp 693. 
+    determine if they are asking about Comp 893, or Comp 690. 
                    
-    Respond with only "Comp 893", or "Comp 693". If you are unsure, respond with "not sure"
+    Respond with only "Comp 893", or "Comp 690". If you are unsure, respond with "not sure"
 
     """
     }
