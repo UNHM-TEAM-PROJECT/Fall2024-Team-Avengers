@@ -4,19 +4,18 @@ import sys
 import PyPDF2
 from  qdrant_client import QdrantClient, models
 from fastembed import TextEmbedding
+from langchain.text_splitter import CharacterTextSplitter
 
-CHUNK_SIZE = 1000
+CHUNK_SIZE = 300
+
 def get_docs(pdf_path):
     """ Converts pdf into string of text"""
-    text = []
+    text = ""
     with open(pdf_path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
-        print(len(reader.pages))
-    
         for page_num in range(len(reader.pages)):
             page = reader.pages[page_num]
-            #text = page.extract_text() or ""
-            text.append(page.extract_text() or "")
+            text += page.extract_text() or ""
     return text
 
 def path_from_name(file_name):
@@ -27,28 +26,27 @@ def path_from_name(file_name):
     return file_path
 
 path = path_from_name(sys.argv[1])
+collect = sys.argv[2]
 
 docs = get_docs(path)
+
+text_splitter = CharacterTextSplitter( separator = "\n", chunk_size = CHUNK_SIZE,
+                                      chunk_overlap = 100, length_function=len)
+
+chunks = text_splitter.split_text(docs)
+
 client = QdrantClient( host='localhost' )
+embed_model = TextEmbedding()
 
-for num, page in enumerate(docs):
-    embed_model = TextEmbedding()
-    #words = page.split()
+embeds = embed_model.embed(chunks)
 
-    #word_chunks = [words[i*CHUNK_SIZE:(i+1) * CHUNK_SIZE] for i in range((len(words) + CHUNK_SIZE -1) // CHUNK_SIZE)]
+pl_text = []
+for index, section in enumerate(chunks):
+    payload = {str(index) : section}
+    pl_text.append(payload)
 
-    #chunks = [" ".join(words) for words in word_chunks]
-    #print(chunks)
+embeds = models.Batch( ids=range(0, len(chunks)), vectors = list(embeds), payloads = pl_text)
 
-    embeds = embed_model.embed(page)
-
-    #pl_text = []
-    #for index, section in enumerate(chunks):
-     #   payload = {str(index) : section}
-      #  pl_text.append(payload)
-
-    embeds = models.Batch( ids=[num], vectors = list(embeds), payloads = [{"0" : page}])
-
-    client.upsert(collection_name = "internship2024",
-                points = embeds
-                )
+client.upsert(collection_name = collect,
+              points = embeds
+             )
