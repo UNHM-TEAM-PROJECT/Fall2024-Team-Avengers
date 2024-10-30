@@ -112,7 +112,7 @@ def get_response(session):
     resp_time = t_fin - t_in
     chunks = [mes.payload.values() for x in chunks for mes in x]    
 
-    fields=[question, chunks, answer, resp_time]
+    fields=[question, chunks, answer, resp_time, session['course']]
     with open('log.csv', 'a+', newline='', encoding="utf-8") as log:
         writer = csv.writer(log)
         writer.writerow(fields)
