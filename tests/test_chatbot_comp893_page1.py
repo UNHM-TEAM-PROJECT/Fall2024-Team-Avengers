@@ -1,6 +1,6 @@
 import pytest
 import requests
-import csv
+import re
 from sentence_transformers import SentenceTransformer, util
 
 # Load the model for embedding
