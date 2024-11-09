@@ -21,7 +21,7 @@ app.secret_key = "comp690"
 def hello_world():
     return render_template("chatbotUI.html")
 
-@app.route('/llm_response', methods=['POST'])
+@app.route('/llm_response', methods=['POST', 'PUT'])
 def handle_post():
     if request.method == 'POST':
         if 'history' not in session:
@@ -34,7 +34,11 @@ def handle_post():
         response = make_response(get_response(session))
         response.mimetype = "text/plain"
         session['history'].append( {"role": "assistant", "content": f"{response}"})
-
+        return response
+    elif request.method == 'PUT':
+        session['history'] = [prompt]
+        session['course'] = ""
+        response = "all good"
         return response
 
 def answer_question(messages, chunks):
