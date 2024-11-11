@@ -119,6 +119,21 @@
         .send-button:hover {
             background-color: #357ab8; /* Darker on hover */
         }
+
+        .delete-button {
+            margin-left: 10px;
+            background-color: #F44336; /* Send button color */
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+            
+        .delete-button:hover {
+            background-color: #D32F2F; /* Darker on hover */
+        }
     </style>
 </head>
 <body>
@@ -126,6 +141,7 @@
         <div class="chat-title">
             <img src="{{ url_for('static', filename='UNH.png') }}" alt="UNH Logo">
             <h2>Internship Chatbot</h2> 
+            <button id="delete-button" class="delete-button">Reset History</button>
         </div>
         <div class="chat-container" id="chat-container">
             <!-- Chat messages will be dynamically added here -->
@@ -153,7 +169,20 @@
             }, 500);
         }
 
+        function clearHistory() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.replaceChildren([]);
+            $.ajax({
+                url: '/llm_response',
+                type: 'PUT',
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        }
+
         document.getElementById('send-button').addEventListener('click', sendMessage);
+        document.getElementById('delete-button').addEventListener('click', clearHistory);
         document.getElementById('user-input').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault(); // Prevent default action
