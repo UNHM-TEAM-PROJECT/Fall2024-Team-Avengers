@@ -10,6 +10,7 @@ from fastembed import TextEmbedding
 from flask import Flask, render_template, request, redirect, session, make_response
 from openai import OpenAI
 from itertools import chain
+from datetime import datetime 
 
 config = configparser.ConfigParser()
 config.read("config.txt")
@@ -127,7 +128,10 @@ def get_response(session):
     resp_time = t_fin - t_in
     chunks = [mes.payload.values() for x in chunks for mes in x]    
 
-    fields=[question, chunks, answer, resp_time, session['course']]
+    if session['course']:
+        fields=[question, chunks, answer, resp_time, session['course'], datetime.now()]
+    else:
+            fields=[question, chunks, answer, resp_time, "none", datetime.now()]
     with open('log.csv', 'a+', newline='', encoding="utf-8") as log:
         writer = csv.writer(log)
         writer.writerow(fields)
