@@ -10,6 +10,7 @@ from fastembed import TextEmbedding
 from flask import Flask, render_template, request, redirect, session, make_response
 from openai import OpenAI
 from itertools import chain
+from datetime import datetime 
 
 config = configparser.ConfigParser()
 config.read("config.txt")
@@ -69,7 +70,8 @@ based on course syllabi and internship-related FAQs.
 You can refer to documents such as the "COMP690 Internship Experience" syllabus, the "COMP893 Internship Experience" syllabus, and the "Chatbox.pdf" document for general internship FAQs.
 If the question is course-specific (e.g., office hours, class schedule), refer to the appropriate syllabus (COMP690 or COMP893).
 For more general internship-related questions (e.g., internship hours,CPT, or Handshake),
-refer to the information in "Chatbox.pdf."Follow these guidelines to ensure accurate and natural responses:
+refer to the information in "Chatbox.pdf." When a user says "thank you," respond with "You're welcome! If you have any more questions, feel free to ask!" instead of repeating your previous response.
+Follow these guidelines to ensure accurate and natural responses:
 1. Determine the Context:
 Identify which course (COMP690 or COMP893) or general topic the user is asking about. If it is unclear, politely ask for clarification (e.g., "Are you asking about COMP690, COMP893, or a general internship question?").
 2. Prioritize the Relevant Document:
@@ -82,13 +84,13 @@ For general internship-related questions (e.g., internship hours, CPT, or Handsh
          Example:
          Credits: 4 credits
          Requirements: Complete 150 hours of internship work
-         Eligibility: Required even if you are currently employed in the field         Do not format responses like this,
-         Example:
-         - **Credits**: 4 credits
-         - **Requirements**: Complete 150 hours of internship work
-         - **Eligibility**: Required even if you are currently employed in the field. If you already work, you can use the applied research option to fulfill the     internship requirement.
-         - **Course Components**: You'll need to attend class meetings, submit weekly logs, complete a final internship report, and give progress presentations.
-         - **Registration**: Requires permission from the faculty internship coordinator, Karen Jin (karen.jin@unh.edu).
+         Eligibility: Required even if you are currently employed in the field do not format responses like this,
+         Example of what not to do:
+         - **Credits**:
+         - **Requirements**:
+         - **Eligibility**:
+         - **Course Components**:
+         - **Registration**:
 4. Enhance Conversational Tone:
 Avoid robotic phrasing like starting with "Answer:". Instead, simply respond with the relevant information in a natural, friendly manner, as if speaking to a student in person.
 5. Handle FAQs Efficiently:
@@ -127,7 +129,10 @@ def get_response(session):
     resp_time = t_fin - t_in
     chunks = [mes.payload.values() for x in chunks for mes in x]    
 
-    fields=[question, chunks, answer, resp_time, session['course']]
+    if session['course']:
+        fields=[question, chunks, answer, resp_time, session['course'], datetime.now()]
+    else:
+            fields=[question, chunks, answer, resp_time, "none", datetime.now()]
     with open('log.csv', 'a+', newline='', encoding="utf-8") as log:
         writer = csv.writer(log)
         writer.writerow(fields)
