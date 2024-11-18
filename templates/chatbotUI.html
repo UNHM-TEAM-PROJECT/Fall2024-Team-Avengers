@@ -196,7 +196,7 @@
             if (messageText === '') return;
 
             addMessage('outgoing', messageText);
-            input.value = ''; // Clear input
+            input.value = '';
 
             // Simulate bot response
             setTimeout(() => {
@@ -204,10 +204,23 @@
             }, 500);
         }
 
+        function clearHistory() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = '';
+            $.ajax({
+                url: '/llm_response',
+                type: 'PUT',
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        }
+
         document.getElementById('send-button').addEventListener('click', sendMessage);
+        document.getElementById('refresh-button').addEventListener('click', clearHistory);
         document.getElementById('user-input').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
-                event.preventDefault(); // Prevent default action
+                event.preventDefault();
                 sendMessage();
             }
         });
@@ -218,13 +231,21 @@
             chatDiv.className = `chat ${type}`;
             chatDiv.innerText = message;
             chatContainer.appendChild(chatDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function getBotResponse(userMessage) {
-            // Simulated bot response
-            const response = "This is a simulated response based on: " + userMessage;
-            addMessage('incoming', response);
+            $.ajax({
+                url: '/llm_response',
+                type: 'POST',
+                data: { 'message': userMessage },
+                success: function(response) {
+                    addMessage("incoming", response);
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
         }
     </script>
 </body>
