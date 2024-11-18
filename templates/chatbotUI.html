@@ -190,7 +190,42 @@
     </div>
 
     <script>
-        /* Your JavaScript remains unchanged */
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const messageText = input.value.trim();
+            if (messageText === '') return;
+
+            addMessage('outgoing', messageText);
+            input.value = ''; // Clear input
+
+            // Simulate bot response
+            setTimeout(() => {
+                getBotResponse(messageText);
+            }, 500);
+        }
+
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+        document.getElementById('user-input').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default action
+                sendMessage();
+            }
+        });
+
+        function addMessage(type, message) {
+            const chatContainer = document.getElementById('chat-container');
+            const chatDiv = document.createElement('div');
+            chatDiv.className = `chat ${type}`;
+            chatDiv.innerText = message;
+            chatContainer.appendChild(chatDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom
+        }
+
+        function getBotResponse(userMessage) {
+            // Simulated bot response
+            const response = "This is a simulated response based on: " + userMessage;
+            addMessage('incoming', response);
+        }
     </script>
 </body>
 </html>
