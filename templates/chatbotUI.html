@@ -93,6 +93,8 @@
             overflow-y: auto;
             border-top: 1px solid #fffdfd;
             background-color: #ffffff;
+            display: flex;
+            flex-direction: column;  /* Ensure messages are stacked vertically */
         }
 
         .chat {
@@ -111,7 +113,6 @@
         .chat.incoming {
             background-color: #dedee4;
             color: #333333;
-            align-self: flex-start;
             border: 1px solid #dcdcdc;
         }
 
@@ -129,7 +130,7 @@
         }
 
         .chat.outgoing {
-            background-color: #dfdfe2;
+            background-color: #d2d2d4;
             color: #050506;
             align-self: flex-end;
         }
