@@ -19,14 +19,14 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f5f5f5;
-            color: #333333; /* Dark grey for text */
+            background-color: #ffffff;
+            color: #333333;
         }
 
         .chatbox {
-            width: 90%;
-            max-width: 900px;
-            height: 550px;
+            width: 95%;
+            max-width: 1000px;
+            height: 600px;
             background-color: #ffffff;
             border-radius: 5px;
             box-shadow: 0 4px 15px rgba(43, 13, 142, 0.1);
@@ -38,7 +38,7 @@
         .chat-title {
             background-color: #112e8f;
             color: #ffffff;
-            padding: 10px 15px;
+            padding: 8px 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -47,37 +47,33 @@
         }
 
         .chat-title img {
-            height: 50px;
-            margin-bottom: 10px;
+            height: 40px;
+            margin-bottom: 8px;
         }
 
-        .chat-title h1,
-        .chat-title h2,
-        .chat-title h3 {
+        .chat-title h1, .chat-title h2, .chat-title h3 {
             margin: 0;
             line-height: 1.2;
-            font-weight: 300; /* Thin font weight */
+            font-weight: 300;
             color: #ffffff;
         }
 
-        /* Adjust sizes */
         .chat-title h1 {
-            font-size: 1.9rem; /* Slightly larger than h2/h3 */
-            /* font-family: "Segoe UI", Arial, sans-serif; */
+            font-size: 2rem;
             font-weight: bold;
         }
 
         .chat-title h2 {
-            font-size: 1rem; /* Medium size */
+            font-size: 1.1rem;
         }
 
         .chat-title h3 {
-            font-size: 0.9rem; /* Smallest size */
+            font-size: 0.9rem;
         }
 
         .refresh-button {
             position: absolute;
-            top: 10px;
+            top: 8px;
             right: 15px;
             background-color: transparent;
             border: none;
@@ -95,38 +91,68 @@
             flex: 1;
             padding: 15px;
             overflow-y: auto;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid #fffdfd;
+            background-color: #ffffff;
         }
 
         .chat {
             margin: 8px 0;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 98%;
+            padding: 12px 15px;
+            border-radius: 15px;
+            max-width: 75%;
             font-size: 0.95em;
             line-height: 1.4;
-            color: #444444;
-            
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            display: inline-block;
+            position: relative;
+        }
+
+        .chat.incoming {
+            background-color: #dedee4;
+            color: #333333;
+            align-self: flex-start;
+            border: 1px solid #dcdcdc;
+        }
+
+        .chat.incoming::after {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 10px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-right-color: #d4d3da;
+            border-left: 0;
+            margin-top: -8px;
         }
 
         .chat.outgoing {
-            background-color: #d9d9d9;
+            background-color: #dfdfe2;
             color: #050506;
             align-self: flex-end;
         }
 
-        .chat.incoming {
-            background-color: #f0f0f0;
-            color: #333333;
-            align-self: flex-start;
+        .chat.outgoing::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 10px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-left-color: #f0f0f0;
+            border-right: 0;
+            margin-top: -8px;
         }
-
 
         .typing-container {
             padding: 10px;
             display: flex;
             align-items: center;
             border-top: 1px solid #e0e0e0;
+            background-color: #ffffff;
         }
 
         .typing-textarea {
@@ -170,16 +196,23 @@
         .send-button:hover {
             color: #555555;
         }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .chatbox {
+                height: 90vh;
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="chatbox">
         <div class="chat-title">
-            <button id="refresh-button" class="refresh-button">&#x21bb;</button>
+            <button id="refresh-button" class="refresh-button" title="Refresh Chat History">&#x21bb;</button>
             <img src="{{ url_for('static', filename='UNH.png') }}" alt="UNH Logo">
             <h1>Internship Chatbot</h1>
             <h2>UNH Manchester</h2> 
-            <!-- <h3>Comp Internship Chatbot</h3> -->
         </div>
         <div class="chat-container" id="chat-container">
             <!-- Chat messages will be dynamically added here -->
@@ -187,7 +220,7 @@
         <div class="typing-container">
             <div class="typing-textarea">
                 <textarea id="user-input" placeholder="Type a message..."></textarea>
-                <button id="send-button" class="send-button">&#9658;</button> <!-- Send icon -->
+                <button id="send-button" class="send-button">&#9658;</button>
             </div>
         </div>
     </div>
