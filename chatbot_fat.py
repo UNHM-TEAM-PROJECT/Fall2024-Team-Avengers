@@ -3,8 +3,7 @@ import time
 import csv
 import PyPDF2
 import configparser
-from qdrant_client import QdrantClient, models
-from qdrant_client.http.exceptions import UnexpectedResponse
+from qdrant_client import QdrantClient
 from qdrant import qdrantsearch
 from fastembed import TextEmbedding
 from flask import Flask, render_template, request, redirect, session, make_response
