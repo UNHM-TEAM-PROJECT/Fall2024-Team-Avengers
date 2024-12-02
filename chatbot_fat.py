@@ -19,6 +19,7 @@ app.secret_key = "comp690"
 
 @app.route("/")
 def hello_world():
+    session['history'] = [prompt]
     return render_template("chatbotUI.html")
 
 @app.route('/llm_response', methods=['POST', 'PUT'])
@@ -61,7 +62,8 @@ def main():
     global open_client
     global embed_model
     global prompt
-
+    global data_dir
+    data_dir=config.get("settings", "data_dir")
 
     prompt = {"role": "system", "content": f"""
 You are a friendly, knowledgeable chatbot designed to assist students with,questions about their internship experience,
@@ -132,7 +134,7 @@ def get_response(session):
         fields=[question, chunks, answer, resp_time, session['course'], datetime.now()]
     else:
             fields=[question, chunks, answer, resp_time, "none", datetime.now()]
-    with open('log.csv', 'a+', newline='', encoding="utf-8") as log:
+    with open(data_dir + 'log.csv', 'a+', newline='', encoding="utf-8") as log:
         writer = csv.writer(log)
         writer.writerow(fields)
     return response
@@ -174,7 +176,7 @@ def get_context(messages, question):
             session['course'] = ""
 
     fields=[question, course, session['course']]
-    with open('raglog.csv', 'a+', newline='', encoding="utf-8") as log:
+    with open(data_dir + 'raglog.csv', 'a+', newline='', encoding="utf-8") as log:
         writer = csv.writer(log)
         writer.writerow(fields)
     return session['course']
