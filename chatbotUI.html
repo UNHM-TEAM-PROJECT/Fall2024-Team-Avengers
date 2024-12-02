@@ -19,113 +19,175 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f7f7f8; /* Light background */
+            background-color: #ffffff;
+            color: #333333;
         }
 
         .chatbox {
-            width: 100%;
-            max-width: 600px;
-            height: 500px; /* Fixed height for the entire chatbox */
-            background-color: #ffffff; /* White background */
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 1000px;
+            height: 600px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 4px 15px rgba(43, 13, 142, 0.1);
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         .chat-title {
-            background-color: #4a90e2; /* Bright blue for title */
-            color: white;
-            padding: 15px;
-            text-align: center;
-            border-radius: 8px 8px 0 0;
-            position: sticky; /* Keeps title visible */
-            top: 0; /* Sticks to the top */
-            z-index: 1; /* Ensure it stays above other elements */
-            display: flex; /* Use flexbox for alignment */
-            align-items: center; /* Center vertically */
-            justify-content: center; /* Center horizontally */
+            background-color: #112e8f;
+            color: #ffffff;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
 
         .chat-title img {
-            height: 40px; /* Adjust logo height */
-            margin-right: 10px; /* Space between logo and title */
+            height: 40px;
+            margin-bottom: 8px;
+        }
+
+        .chat-title h1, .chat-title h2, .chat-title h3 {
+            margin: 0;
+            line-height: 1.2;
+            font-weight: 300;
+            color: #ffffff;
+        }
+
+        .chat-title h1 {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .chat-title h2 {
+            font-size: 1.1rem;
+        }
+
+        .chat-title h3 {
+            font-size: 0.9rem;
+        }
+
+        .refresh-button {
+            position: absolute;
+            top: 8px;
+            right: 15px;
+            background-color: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 35px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .refresh-button:hover {
+            color: #bbbbbb;
         }
 
         .chat-container {
             flex: 1;
-            padding: 20px;
-            overflow-y: auto; /* Enable scrolling */
-            border-top: 1px solid #e0e0e0;
-            border-bottom: 1px solid #e0e0e0;
-            height: calc(100% - 100px); /* Adjust height for input area */
+            padding: 15px;
+            overflow-y: auto;
+            border-top: 1px solid #fffdfd;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;  /* Ensure messages are stacked vertically */
         }
 
         .chat {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 80%; /* Limit width of messages */
-        }
-
-        .chat.outgoing {
-            background-color: #e1f5fe; /* Light blue for outgoing messages */
-            align-self: flex-end; /* Align to the right */
+            margin: 8px 0;
+            padding: 12px 15px;
+            border-radius: 15px;
+            max-width: 75%;
+            font-size: 0.95em;
+            line-height: 1.4;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            display: inline-block;
+            position: relative;
         }
 
         .chat.incoming {
-            background-color: #ffffff; /* White for incoming messages */
-            align-self: flex-start; /* Align to the left */
-            border: 1px solid #e0e0e0; /* Border for incoming messages */
+            background-color: #dedee4;
+            color: #333333;
+            border: 1px solid #dcdcdc;
+        }
+
+        .chat.outgoing {
+            background-color: #d2d2d4;
+            color: #050506;
+            align-self: flex-end;
         }
 
         .typing-container {
             padding: 10px;
-            border-top: 1px solid #e0e0e0;
             display: flex;
+            align-items: center;
+            border-top: 1px solid #e0e0e0;
+            background-color: #ffffff;
         }
 
         .typing-textarea {
             flex: 1;
-            display: flex;
             position: relative;
+            display: flex;
+            align-items: center;
         }
 
         .typing-textarea textarea {
             width: 100%;
-            height: 45px;
-            border: 1px solid #e0e0e0;
-            border-radius: 25px; /* Curved text area */
-            padding: 10px;
-            resize: none; /* Disable resize */
+            height: 40px;
+            border: 1px solid #dddddd;
+            border-radius: 20px;
+            padding: 8px 45px 8px 15px;
+            resize: none;
             outline: none;
+            font-size: 0.95em;
+            color: #333333;
+            background-color: #f8f8f8;
         }
 
         .typing-textarea textarea::placeholder {
-            color: #aaa; /* Placeholder color */
+            color: #aaaaaa;
         }
 
         .send-button {
-            margin-left: 10px;
-            background-color: #4a90e2; /* Send button color */
-            color: white;
+            position: absolute;
+            right: 10px;
+            background-color: transparent;
             border: none;
-            border-radius: 25px;
-            padding: 10px 15px;
+            font-size: 18px;
+            color: #333333;
             cursor: pointer;
-            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s;
         }
 
         .send-button:hover {
-            background-color: #357ab8; /* Darker on hover */
+            color: #555555;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .chatbox {
+                height: 90vh;
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="chatbox">
         <div class="chat-title">
-            <img src="https://www.unh.edu/sites/default/files/unh-logo.png" alt="UNH Logo"> <!-- Replace with actual logo URL -->
-            Internship Chatbot
+            <button id="refresh-button" class="refresh-button" title="Refresh Chat History">&#x21bb;</button>
+            <img src="{{ url_for('static', filename='UNH.png') }}" alt="UNH Logo">
+            <h1>Internship Chatbot</h1>
+            <h2>UNH Manchester</h2> 
         </div>
         <div class="chat-container" id="chat-container">
             <!-- Chat messages will be dynamically added here -->
@@ -133,7 +195,7 @@
         <div class="typing-container">
             <div class="typing-textarea">
                 <textarea id="user-input" placeholder="Type a message..."></textarea>
-                <button id="send-button" class="send-button">Send</button>
+                <button id="send-button" class="send-button">&#9658;</button>
             </div>
         </div>
     </div>
@@ -145,7 +207,7 @@
             if (messageText === '') return;
 
             addMessage('outgoing', messageText);
-            input.value = ''; // Clear input
+            input.value = '';
 
             // Simulate bot response
             setTimeout(() => {
@@ -153,10 +215,23 @@
             }, 500);
         }
 
+        function clearHistory() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = '';
+            $.ajax({
+                url: '/llm_response',
+                type: 'PUT',
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        }
+
         document.getElementById('send-button').addEventListener('click', sendMessage);
+        document.getElementById('refresh-button').addEventListener('click', clearHistory);
         document.getElementById('user-input').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
-                event.preventDefault(); // Prevent default action
+                event.preventDefault();
                 sendMessage();
             }
         });
@@ -167,13 +242,21 @@
             chatDiv.className = `chat ${type}`;
             chatDiv.innerText = message;
             chatContainer.appendChild(chatDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function getBotResponse(userMessage) {
-            // Simulated bot response
-            const response = "This is a simulated response based on: " + userMessage;
-            addMessage('incoming', response);
+            $.ajax({
+                url: '/llm_response',
+                type: 'POST',
+                data: { 'message': userMessage },
+                success: function(response) {
+                    addMessage("incoming", response);
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
         }
     </script>
 </body>
