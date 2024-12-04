@@ -20,6 +20,7 @@ app.secret_key = "comp690"
 @app.route("/")
 def hello_world():
     session['history'] = [prompt]
+    session['course'] = ""
     return render_template("chatbotUI.html")
 
 @app.route('/llm_response', methods=['POST', 'PUT'])
