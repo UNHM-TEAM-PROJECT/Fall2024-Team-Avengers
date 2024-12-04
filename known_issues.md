@@ -6,7 +6,7 @@
 
 - **Repeat Answers:** The bot will occassionally repeat the last answer when it can't figure out what to do with the user input. "thank you" returns the correct message but "thanks" leads to a repeat message.
 
-- **UI Bugs:** If you click next to the text input box but not on the box, a cursor will appear in a "fake" intput box that doesn't let you type anything
+- ~~**UI Bugs:** If you click next to the text input box but not on the box, a cursor will appear in a "fake" intput box that doesn't let you type anything~~
 
 ## Future Improvements
 
